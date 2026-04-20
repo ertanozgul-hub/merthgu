@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Yönetimi</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Standard Hooks -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#11141c">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <button id="mobileMenuBtn" class="btn" onclick="document.querySelector('.sidebar').classList.toggle('open')" style="display:none; margin-right:10px; background:var(--bg-card); color:white; border:none; padding:8px 12px; font-size:18px;"><i class="fas fa-bars"></i></button>
+            <h1 class="logo">MERT</h1>
+            <span class="company-info"><i class="fas fa-map-marker-alt"></i> Dudullu OSB Mah. Ümraniye - İSTANBUL | <i class="fas fa-envelope"></i> info@mert.com</span>
+        </div>
+        <div class="nav-right">
+            <button class="btn btn-primary" onclick="window.location.href='order.html'"><i class="fas fa-plus"></i> Yeni Sipariş Gir</button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="filter-section">
+                <h3>Şubeler</h3>
+                <label><input type="checkbox" class="filter-branch" value="Dudullu" checked> Dudullu <span class="bg-yellow color-box"></span></label>
+                <label><input type="checkbox" class="filter-branch" value="İkitelli" checked> İkitelli <span class="bg-blue color-box"></span></label>
+                <label><input type="checkbox" class="filter-branch" value="İzmir" checked> İzmir <span class="bg-dark color-box"></span></label>
+                <label><input type="checkbox" class="filter-branch" value="Ankara" checked> Ankara <span class="bg-gray color-box"></span></label>
+                <label><input type="checkbox" class="filter-branch" value="Bursa" checked> Bursa <span class="bg-black color-box"></span></label>
+                <label><input type="checkbox" class="filter-branch" value="Adana" checked> Adana <span class="bg-green color-box"></span></label>
+            </div>
+            <div class="filter-section">
+                <h3>Aşama</h3>
+                <label><input type="checkbox" class="filter-stage" value="Tasarım" checked> Tasarım</label>
+                <label><input type="checkbox" class="filter-stage" value="Kaynak" checked> Kaynak</label>
+                <label><input type="checkbox" class="filter-stage" value="Boya" checked> Boya</label>
+                <label><input type="checkbox" class="filter-stage" value="Montaj" checked> Montaj</label>
+            </div>
+            <div class="filter-section">
+                <h3>Sipariş Durumu</h3>
+                <label><input type="radio" name="statusFilter" value="all" class="filter-status"> Tüm Siparişler</label>
+                <label><input type="radio" name="statusFilter" value="completed" class="filter-status"> Tamamlananlar</label>
+                <div>
+                    <label><input type="radio" name="statusFilter" value="active" class="filter-status" checked> Devam Edenler</label>
+                    <div id="dynamicWeeksContainer" style="margin-left: 24px; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; opacity: 0.8;">
+                        <!-- JS injected -->
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content (Grid) -->
+        <main class="content">
+            <header class="content-header">
+                <h2>Ürün Siparişleri</h2>
+                <div class="search-bar">
+                    <input type="text" placeholder="Sipariş no / PCD no">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </header>
+            
+            <div class="grid-container" id="ordersGrid">
+                <!-- Order Cards will be injected via JS -->
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA ServiceWorker Aktif!'));
+            });
+        }
+    </script>
+</body>
+</html>

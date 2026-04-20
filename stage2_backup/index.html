@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Yönetimi</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <h1 class="logo">MERT</h1>
+            <span class="company-info"><i class="fas fa-map-marker-alt"></i> Dudullu OSB Mah. Ümraniye - İSTANBUL | <i class="fas fa-envelope"></i> info@mert.com</span>
+        </div>
+        <div class="nav-right">
+            <button class="btn btn-primary" onclick="window.location.href='order.html'"><i class="fas fa-plus"></i> Yeni Sipariş Gir</button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="filter-section">
+                <h3>Şubeler</h3>
+                <label><input type="checkbox" value="Dudullu" checked> Dudullu <span class="bg-yellow color-box"></span></label>
+                <label><input type="checkbox" value="İkitelli"> İkitelli <span class="bg-blue color-box"></span></label>
+                <label><input type="checkbox" value="İzmir"> İzmir <span class="bg-dark color-box"></span></label>
+                <label><input type="checkbox" value="Ankara"> Ankara <span class="bg-gray color-box"></span></label>
+                <label><input type="checkbox" value="Bursa"> Bursa <span class="bg-black color-box"></span></label>
+                <label><input type="checkbox" value="Adana"> Adana <span class="bg-green color-box"></span></label>
+            </div>
+            <div class="filter-section">
+                <h3>Aşama</h3>
+                <label><input type="checkbox" checked> Tüm Aşamalar</label>
+            </div>
+            <div class="filter-section">
+                <h3>Teslim Haftası</h3>
+                <label><input type="radio" name="weekFilter" checked> Tamamlananlar</label>
+                <label><input type="radio" name="weekFilter"> 16. Hafta</label>
+                <label><input type="radio" name="weekFilter"> 17. Hafta</label>
+                <label><input type="radio" name="weekFilter"> 18. Hafta</label>
+                <label><input type="radio" name="weekFilter"> 19. Hafta</label>
+            </div>
+        </aside>
+
+        <!-- Main Content (Grid) -->
+        <main class="content">
+            <header class="content-header">
+                <h2>Ürün Siparişleri</h2>
+                <div class="search-bar">
+                    <input type="text" placeholder="Sipariş no / PCD no">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+            </header>
+            
+            <div class="grid-container" id="ordersGrid">
+                <!-- Order Cards will be injected via JS -->
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

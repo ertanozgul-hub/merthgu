@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Detay</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Scripts for Parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser/dist/dxf-parser.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/occt-import-js@0.0.22/dist/occt-import-js.js"></script>
+</head>
+<body class="dark-mode">
+    <!-- Topbar -->
+    <header class="detail-header">
+        <div class="left">
+            <button onclick="window.location.href='index.html'" class="btn-back"><i class="fas fa-arrow-left"></i></button>
+            <span class="breadcrumb">Ana Sayfa > <b>Sipariş Detay</b></span>
+        </div>
+        <div class="right">
+            <button class="btn btn-secondary" onclick="download2D()"><i class="fas fa-download"></i> 2D Autocad İndir</button>
+            <button class="btn btn-secondary" id="previewBtn"><i class="fas fa-eye"></i> Ön İzle</button>
+            <button class="btn btn-primary" id="saveOrderBtn"><i class="fas fa-save"></i> Kaydet</button>
+            <div class="user-profile">
+                <div class="avatar">VC</div>
+                <div class="info"><span>Veli Coşkun</span><small>Admin</small></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="detail-container">
+        <!-- Main Viewer Panel -->
+        <div class="viewer-panel">
+            <div class="panel-header">
+                <h2 id="orderLabel">Sipariş No (Oluşturuluyor...)</h2>
+                <div class="toggles">
+                    <span class="pressure-label">Sistem Basıncı:</span>
+                    <input type="text" id="sysPressure" class="form-input short" placeholder="210 Bar">
+                    <div class="view-toggles">
+                        <button class="toggle-btn active" id="btn3D">3D</button>
+                        <button class="toggle-btn" id="btn2D">2D</button>
+                        <button class="toggle-btn" id="btnIMG" title="Fotoğraf Galerisi"><i class="fas fa-camera"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="viewer-canvas-wrapper" id="viewerContainer">
+                <!-- 3D or 2D render goes here -->
+                <div class="empty-state">Görüntüleme için bekleyen dosya yok.</div>
+            </div>
+
+            <!-- Drop Zones -->
+            <div class="drop-zones">
+                <h3 class="section-title">Dosyalar <span id="fileCount">0 dosya yüklü</span></h3>
+                <div class="file-grid">
+                    <!-- Excel -->
+                    <div class="drop-zone" id="dropExcel" ondrop="handleDrop(event, 'excel')" ondragover="allowDrop(event)">
+                        <div class="status placeholder">BEKLENİYOR</div>
+                        <i class="fas fa-file-excel icon-excel"></i>
+                        <p>Excel'i sürükle -> Bilgiler otomatik dolar</p>
+                    </div>
+                    <!-- DXF -->
+                    <div class="drop-zone" id="dropDXF" ondrop="handleDrop(event, 'dxf')" ondragover="allowDrop(event)">
+                        <div class="status placeholder">BEKLENİYOR</div>
+                        <i class="fas fa-ruler-combined icon-dxf"></i>
+                        <p>Sürükle veya seç (DXF)</p>
+                    </div>
+                    <!-- STEP -->
+                    <div class="drop-zone" id="dropSTEP" ondrop="handleDrop(event, 'step')" ondragover="allowDrop(event)">
+                        <div class="status placeholder">BEKLENİYOR</div>
+                        <i class="fas fa-cubes icon-step"></i>
+                        <p>Sürükle veya seç (STEP)</p>
+                    </div>
+                    <!-- FOTO -->
+                    <div class="drop-zone" id="dropIMG" ondrop="handleDrop(event, 'img')" ondragover="allowDrop(event)">
+                        <div class="status placeholder">BEKLENİYOR</div>
+                        <i class="fas fa-image icon-img"></i>
+                        <p>Sürükle veya seç (FOTO)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials List -->
+            <div class="materials-section">
+                <h3 class="section-title">Malzeme Listesi <button class="btn-small">+ Satır Ekle</button> <span class="badge red">0 Eksik</span></h3>
+                <div class="material-table-wrapper">
+                    <table class="modern-table" id="materialsTable">
+                        <thead>
+                            <tr>
+                                <th>Poz</th>
+                                <th>Adet</th>
+                                <th>Malzeme Adı</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsBody">
+                            <!-- Parsed from DXF -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side Form Panel -->
+        <aside class="form-panel">
+            <div class="form-tabs">
+                <button class="tab-btn active">Sipariş Miktarı</button>
+                <button class="tab-btn" id="labelNoTab">Etiket No: Yükleniyor...</button>
+            </div>
+            
+            <div class="form-group row-align">
+                <label>ADET</label>
+                <div class="counter">
+                    <button id="qtyMinus">-</button>
+                    <input type="number" id="orderQty" value="1" min="1">
+                    <button id="qtyPlus">+</button>
+                </div>
+            </div>
+
+            <h4 class="form-subheading">SİPARİŞ BİLGİLERİ</h4>
+            
+            <div class="form-group">
+                <label>TESLİM TARİHİ</label>
+                <input type="date" id="deliveryDate" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label>SİPARİŞ TARİHİ</label>
+                <input type="date" id="orderDate" class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label>PROJE ADI</label>
+                <input type="text" id="projectName" class="form-input" placeholder="Excel'den gelecek...">
+            </div>
+
+            <div class="form-group">
+                <label>MÜŞTERİ ADI</label>
+                <input type="text" id="customerName" class="form-input" placeholder="Excel'den gelecek...">
+            </div>
+
+            <div class="form-group">
+                <label>PROJE SORUMLUSU</label>
+                <input type="text" id="managerName" class="form-input" placeholder="Excel'den gelecek...">
+            </div>
+
+            <div class="form-group">
+                <label>MERT KODU / PCD KODU</label>
+                <input type="text" id="projectCode" class="form-input" placeholder="Excel'den gelecek...">
+            </div>
+
+            <div class="form-group">
+                <label>ŞUBE</label>
+                <select id="branchSelect" class="form-input">
+                    <option value="İkitelli">İkitelli</option>
+                    <option value="Dudullu">Dudullu</option>
+                    <option value="İzmir">İzmir</option>
+                    <option value="Ankara">Ankara</option>
+                    <option value="Adana">Adana</option>
+                    <option value="Bursa">Bursa</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>HACİM</label>
+                <select id="volumeSelect" class="form-input" onchange="calculateHours()">
+                    <option value="0-50">0-50 lt</option>
+                    <option value="50-100">50-100 lt</option>
+                    <option value="100-250">100-250 lt</option>
+                    <option value="250-500">250-500 lt</option>
+                    <option value="500-1000">500-1000 lt</option>
+                </select>
+            </div>
+
+            <h4 class="form-subheading">ÜRETİM SÜRELERİ (Saat)</h4>
+            <div class="hours-grid">
+                <div class="hg-item"><span>Tasarım:</span> <input type="number" id="h-design" class="form-input small-num" value="2"></div>
+                <div class="hg-item"><span>Kaynak:</span> <input type="number" id="h-welding" class="form-input small-num" value="2"></div>
+                <div class="hg-item"><span>Boya:</span> <input type="number" id="h-paint" class="form-input small-num" value="2"></div>
+                <div class="hg-item"><span>Montaj:</span> <input type="number" id="h-assembly" class="form-input small-num" value="6"></div>
+            </div>
+            
+        </aside>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
