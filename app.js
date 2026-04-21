@@ -890,6 +890,21 @@ function loadOrderDetails() {
         }
     });
 
+    // Restore DXF string from IndexedDB
+    loadFileDB(orderId + '_dxf').then(dxfStr => {
+        if(dxfStr) {
+            window.globalDxfString = dxfStr;
+            currentOrderData.files.dxf = true;
+            updateFileCount();
+            const dropDxf = document.getElementById('dropDXF')?.querySelector('.status');
+            if(dropDxf) {
+                dropDxf.classList.remove('placeholder');
+                dropDxf.classList.add('loaded');
+                dropDxf.innerHTML = '';
+            }
+        }
+    });
+
     if (order.completedStages) {
         document.querySelectorAll('.hg-item').forEach((item, index) => {
             if(order.completedStages[index]) item.classList.add('completed');
@@ -1023,6 +1038,10 @@ document.getElementById('saveOrderBtn')?.addEventListener('click', () => {
 
     if (currentOrderData.stepBuffer) {
         saveFileDB(orderId + '_step', currentOrderData.stepBuffer);
+    }
+    
+    if (window.globalDxfString) {
+        saveFileDB(orderId + '_dxf', window.globalDxfString);
     }
 
     alert("Sipariş Kaydedildi! ("+order.id+")");
