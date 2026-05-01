@@ -2045,3 +2045,160 @@ function renderSidebarReports(orders) {
     setT('rep-yearly-out', stats.yearly.out);
     setT('rep-yearly-hrs', stats.yearly.hrs);
 }
+
+// === FOCUSED HYDRAULIC CALCULATOR (Cylinder & Electric Motor) ===
+
+let currentSystem = 'metric';
+
+function setCalcSystem(sys) {
+    currentSystem = sys;
+    document.getElementById('btn-sys-metric').classList.remove('active');
+    document.getElementById('btn-sys-inch').classList.remove('active');
+    document.getElementById('btn-sys-' + sys).classList.add('active');
+
+    // Change all selects based on system
+    const selects = document.querySelectorAll('.adv-calc-container select:not(.type-selector)');
+    selects.forEach(sel => {
+        if (sys === 'inch') {
+            if (sel.querySelector('option[value="in"]')) sel.value = "in";
+            else if (sel.querySelector('option[value="psi"]')) sel.value = "psi";
+            else if (sel.querySelector('option[value="gpm"]')) sel.value = "gpm";
+            else if (sel.querySelector('option[value="in2"]')) sel.value = "in2";
+            else if (sel.querySelector('option[value="gal"]')) sel.value = "gal";
+            else if (sel.querySelector('option[value="lbf"]')) sel.value = "lbf";
+            else if (sel.querySelector('option[value="ft/s"]')) sel.value = "ft/s";
+            else if (sel.querySelector('option[value="hp"]')) sel.value = "hp";
+        } else {
+            if (sel.querySelector('option[value="mm"]')) sel.value = "mm";
+            else if (sel.querySelector('option[value="bar"]')) sel.value = "bar";
+            else if (sel.querySelector('option[value="lpm"]')) sel.value = "lpm";
+            else if (sel.querySelector('option[value="cm2"]')) sel.value = "cm2";
+            else if (sel.querySelector('option[value="l"]')) sel.value = "l";
+            else if (sel.querySelector('option[value="kN"]')) sel.value = "kN";
+            else if (sel.querySelector('option[value="m/s"]')) sel.value = "m/s";
+            else if (sel.querySelector('option[value="kW"]')) sel.value = "kW";
+        }
+    });
+    calcAll();
+}
+
+function openAdvTab(tabName) {
+    document.querySelectorAll('.adv-tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.adv-tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('adv-tab-' + tabName).classList.add('active');
+    
+    const btns = ['cylinder', 'motor'];
+    const idx = btns.indexOf(tabName);
+    if(idx > -1) document.querySelectorAll('.adv-tab-btn')[idx].classList.add('active');
+    calcAll();
+}
+
+function toggleView(tab) {
+    let calcView = document.getElementById(tab === 'cylinder' ? 'cyl-calc-view' : 'mot-calc-view');
+    let formView = document.getElementById(tab === 'cylinder' ? 'cyl-form-view' : 'mot-form-view');
+    let btn = document.getElementById(tab === 'cylinder' ? 'btn-toggle-cyl' : 'btn-toggle-mot');
+    
+    if (calcView.style.display === 'none') {
+        calcView.style.display = 'block';
+        formView.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-subscript"></i> <span class="lbl-btn">Formula</span>';
+    } else {
+        calcView.style.display = 'none';
+        formView.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-calculator"></i> <span class="lbl-btn">Calculator</span>';
+    }
+}
+
+function triggerAnim(id) {
+    clearAnim();
+    const el = document.getElementById(id);
+    if(el) el.classList.add('show');
+}
+
+function clearAnim() {
+    document.querySelectorAll('.svg-anim').forEach(el => el.classList.remove('show'));
+}
+
+function getValMetric(inputId, selectId) {
+    let val = parseFloat(document.getElementById(inputId).value) || 0;
+    if(!selectId) return val;
+    let unit = document.getElementById(selectId).value;
+    if (unit === 'in') return val * 25.4;
+    if (unit === 'psi') return val / 14.5038;
+    if (unit === 'gpm') return val * 3.78541;
+    return val;
+}
+
+function formatOutput(valMetric, selectId, baseType) {
+    let unit = document.getElementById(selectId) ? document.getElementById(selectId).value : baseType;
+    let val = valMetric;
+    if (unit === 'in2') val = valMetric / 6.4516;
+    if (unit === 'gal') val = valMetric / 3.78541;
+    if (unit === 'lbf') val = valMetric * 224.809;
+    if (unit === 'ft/s') val = valMetric * 3.28084;
+    if (unit === 'gpm') val = valMetric / 3.78541;
+    if (unit === 'hp') val = valMetric * 1.34102;
+    return isNaN(val) || !isFinite(val) ? "0.00" : val.toFixed(2);
+}
+
+function setOut(id, val) {
+    const el = document.getElementById(id);
+    if(el) el.innerText = val;
+}
+
+function calcCylinder() {
+    if(!document.getElementById('inp-cyl-bore')) return;
+    let bore = getValMetric('inp-cyl-bore', 'u-cyl-bore');
+    let rod = getValMetric('inp-cyl-rod', 'u-cyl-rod');
+    let stroke = getValMetric('inp-cyl-stroke', 'u-cyl-stroke');
+    let pres = getValMetric('inp-cyl-pres', 'u-cyl-pres');
+    let flow = getValMetric('inp-cyl-flow', 'u-cyl-flow');
+
+    let areaB = (Math.PI * Math.pow(bore, 2)) / 400;
+    let areaR = areaB - ((Math.PI * Math.pow(rod, 2)) / 400);
+    let volB = (areaB * stroke) / 10000;
+    let volR = (areaR * stroke) / 10000;
+    let frcB = (pres * areaB) / 10;
+    let frcR = (pres * areaR) / 10;
+    let velB = areaB > 0 ? flow / (areaB * 6) : 0;
+    let velR = areaR > 0 ? flow / (areaR * 6) : 0;
+    let timeB = velB > 0 ? stroke / (velB * 1000) : 0;
+    let timeR = velR > 0 ? stroke / (velR * 1000) : 0;
+    let outfB = areaR > 0 ? flow * (areaB / areaR) : 0;
+    let outfR = areaB > 0 ? flow * (areaR / areaB) : 0;
+    let ratio = areaR > 0 ? areaB / areaR : 0;
+
+    setOut('out-cyl-area-b', formatOutput(areaB, 'u-out-cyl-area'));
+    setOut('out-cyl-area-r', formatOutput(areaR, 'u-out-cyl-area'));
+    setOut('out-cyl-vol-b', formatOutput(volB, 'u-out-cyl-vol'));
+    setOut('out-cyl-vol-r', formatOutput(volR, 'u-out-cyl-vol'));
+    setOut('out-cyl-frc-b', formatOutput(frcB, 'u-out-cyl-frc'));
+    setOut('out-cyl-frc-r', formatOutput(frcR, 'u-out-cyl-frc'));
+    setOut('out-cyl-vel-b', formatOutput(velB, 'u-out-cyl-vel'));
+    setOut('out-cyl-vel-r', formatOutput(velR, 'u-out-cyl-vel'));
+    setOut('out-cyl-time-b', formatOutput(timeB, 'u-out-cyl-time'));
+    setOut('out-cyl-time-r', formatOutput(timeR, 'u-out-cyl-time'));
+    setOut('out-cyl-outf-b', formatOutput(outfB, 'u-out-cyl-outf'));
+    setOut('out-cyl-outf-r', formatOutput(outfR, 'u-out-cyl-outf'));
+    setOut('out-cyl-ratio', "1 : " + ratio.toFixed(2));
+}
+
+function calcMotor() {
+    if(!document.getElementById('inp-em-flow')) return;
+    let flow = getValMetric('inp-em-flow', 'u-em-flow'); // l/min
+    let pres = getValMetric('inp-em-pres', 'u-em-pres'); // bar
+    let eff = parseFloat(document.getElementById('inp-em-eff').value) || 85;
+
+    let power = (flow * pres) / (600 * (eff / 100));
+
+    setOut('out-em-power', formatOutput(power, 'u-out-em-power'));
+}
+
+function calcAll() {
+    calcCylinder();
+    calcMotor();
+}
+
+window.addEventListener('load', () => {
+    setTimeout(calcAll, 500);
+});

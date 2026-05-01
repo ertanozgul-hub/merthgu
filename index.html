@@ -22,6 +22,7 @@
             <span class="company-info"><i class="fas fa-map-marker-alt"></i> Dudullu OSB Mah. Ümraniye - İSTANBUL | <i class="fas fa-envelope"></i> info@mert.com</span>
         </div>
         <div class="nav-right" style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('advCalcModal').style.display='flex'"><i class="fas fa-calculator"></i> Hidrolik Hesaplayıcı</button>
             <button class="btn btn-secondary" onclick="window.location.href='personel.html'"><i class="fas fa-users"></i> Günlük Personel Raporu</button>
             <button class="btn btn-primary" onclick="window.location.href='order.html'"><i class="fas fa-plus"></i> Yeni Sipariş Gir</button>
         </div>
@@ -108,6 +109,312 @@
                 <!-- Order Cards will be injected via JS -->
             </div>
         </main>
+    </div>
+
+    <!-- Advanced Calculator Modal -->
+    <div id="advCalcModal" class="adv-modal-overlay" style="display: none;">
+        <div class="adv-calc-container">
+            <div class="adv-calc-header">
+                <h2>Hydraulic System Calculator</h2>
+                <span class="adv-close" onclick="document.getElementById('advCalcModal').style.display='none'">&times;</span>
+            </div>
+            
+            <div class="adv-calc-sys-toggle">
+                <span>Preferred measurements</span>
+                <div class="adv-toggle-group">
+                    <button id="btn-sys-metric" class="active" onclick="setCalcSystem('metric')">Metric</button>
+                    <button id="btn-sys-inch" onclick="setCalcSystem('inch')">Inch</button>
+                </div>
+            </div>
+
+            <div class="adv-calc-tabs">
+                <button class="adv-tab-btn active" onclick="openAdvTab('cylinder')">
+                    <i class="fas fa-ruler-combined"></i>
+                    <span>Cylinder</span>
+                </button>
+                <button class="adv-tab-btn" onclick="openAdvTab('motor')">
+                    <i class="fas fa-bolt"></i>
+                    <span>Electric Motor</span>
+                </button>
+            </div>
+
+            <div class="adv-calc-body">
+                <!-- CYLINDER TAB -->
+                <div id="adv-tab-cylinder" class="adv-tab-content active">
+                    <div class="tab-header-actions">
+                        <div></div>
+                        <button class="toggle-view-btn" id="btn-toggle-cyl" onclick="toggleView('cylinder')">
+                            <i class="fas fa-subscript"></i> <span class="lbl-btn">Formula</span>
+                        </button>
+                    </div>
+
+                    <!-- Cylinder Calculator View -->
+                    <div id="cyl-calc-view">
+                        <div class="adv-svg-area">
+                            <svg viewBox="0 0 400 150" width="100%" height="150" preserveAspectRatio="xMidYMid meet">
+                                <defs>
+                                    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#e53935" />
+                                    </marker>
+                                </defs>
+                                <path d="M 50 40 L 300 40 L 300 110 L 50 110 Z" fill="#b2dfdb" stroke="#00897b" stroke-width="2"/>
+                                <path d="M 300 60 L 380 60 L 380 90 L 300 90 Z" fill="#e0e0e0" stroke="#9e9e9e" stroke-width="2"/>
+                                <ellipse cx="50" cy="75" rx="10" ry="35" fill="#80cbc4" stroke="#00897b" stroke-width="2"/>
+                                
+                                <g class="svg-anim" id="anim-cyl-bore">
+                                    <line x1="120" y1="40" x2="120" y2="110" stroke="#e53935" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+                                    <text x="125" y="80" font-family="sans-serif" font-size="12" fill="#e53935" font-weight="bold">Bore</text>
+                                </g>
+                                <g class="svg-anim" id="anim-cyl-rod">
+                                    <line x1="340" y1="60" x2="340" y2="90" stroke="#e53935" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+                                    <text x="345" y="78" font-family="sans-serif" font-size="12" fill="#e53935" font-weight="bold">Rod</text>
+                                </g>
+                                <g class="svg-anim" id="anim-cyl-stroke">
+                                    <line x1="60" y1="20" x2="300" y2="20" stroke="#e53935" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+                                    <text x="160" y="15" font-family="sans-serif" font-size="12" fill="#e53935" font-weight="bold">Stroke</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <div class="adv-input-table">
+                            <div class="adv-row">
+                                <div class="adv-lbl">Piston / Bore Diameter</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-cyl-bore" value="50" onfocus="triggerAnim('anim-cyl-bore')" onblur="clearAnim()" oninput="calcCylinder()">
+                                    <select id="u-cyl-bore" onchange="calcCylinder()"><option value="mm">mm</option><option value="in">in</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Rod Diameter</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-cyl-rod" value="25" onfocus="triggerAnim('anim-cyl-rod')" onblur="clearAnim()" oninput="calcCylinder()">
+                                    <select id="u-cyl-rod" onchange="calcCylinder()"><option value="mm">mm</option><option value="in">in</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Stroke</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-cyl-stroke" value="500" onfocus="triggerAnim('anim-cyl-stroke')" onblur="clearAnim()" oninput="calcCylinder()">
+                                    <select id="u-cyl-stroke" onchange="calcCylinder()"><option value="mm">mm</option><option value="in">in</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Pressure</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-cyl-pres" value="150" oninput="calcCylinder()">
+                                    <select id="u-cyl-pres" onchange="calcCylinder()"><option value="bar">bar</option><option value="psi">psi</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Oil Flow</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-cyl-flow" value="20" oninput="calcCylinder()">
+                                    <select id="u-cyl-flow" onchange="calcCylinder()"><option value="lpm">lpm</option><option value="gpm">gpm</option></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="adv-output-table">
+                            <div class="adv-out-header">
+                                <div></div><div>Bore Side</div><div>Rod Side</div><div></div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Area</div>
+                                <div class="adv-out-val" id="out-cyl-area-b">0.00</div>
+                                <div class="adv-out-val" id="out-cyl-area-r">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-cyl-area" onchange="calcCylinder()"><option value="cm2">cm²</option><option value="in2">in²</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Volume</div>
+                                <div class="adv-out-val" id="out-cyl-vol-b">0.00</div>
+                                <div class="adv-out-val" id="out-cyl-vol-r">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-cyl-vol" onchange="calcCylinder()"><option value="l">l</option><option value="gal">gal</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Force</div>
+                                <div class="adv-out-val" id="out-cyl-frc-b">0.00</div>
+                                <div class="adv-out-val" id="out-cyl-frc-r">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-cyl-frc" onchange="calcCylinder()"><option value="kN">kN</option><option value="lbf">lbf</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Time</div>
+                                <div class="adv-out-val" id="out-cyl-time-b">0.00</div>
+                                <div class="adv-out-val" id="out-cyl-time-r">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-cyl-time" onchange="calcCylinder()"><option value="sec">sec</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Velocity</div>
+                                <div class="adv-out-val" id="out-cyl-vel-b">0.00</div>
+                                <div class="adv-out-val" id="out-cyl-vel-r">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-cyl-vel" onchange="calcCylinder()"><option value="m/s">m/s</option><option value="ft/s">ft/s</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Outflow</div>
+                                <div class="adv-out-val" id="out-cyl-outf-b">0.00</div>
+                                <div class="adv-out-val" id="out-cyl-outf-r">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-cyl-outf" onchange="calcCylinder()"><option value="lpm">lpm</option><option value="gpm">gpm</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Ratio</div>
+                                <div class="adv-out-val" id="out-cyl-ratio" style="grid-column: 2 / span 2; text-align:center;">0.00</div>
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cylinder Formula View -->
+                    <div id="cyl-form-view" style="display:none;">
+                        <div class="adv-formula-table">
+                            <div class="adv-out-header">
+                                <div></div><div>Bore side</div><div>Rod side</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-vector-square"></i> Area</div>
+                                <div class="form-eq">π x R²</div>
+                                <div class="form-eq">X - π x r²</div>
+                                <div class="form-desc">R = Radius of piston/Bore; X = Area on piston/Bore side; r = Radius of rod</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-cube"></i> Volume</div>
+                                <div class="form-eq">π x R² x L</div>
+                                <div class="form-eq">X - π x r² x L</div>
+                                <div class="form-desc">X = Volume on piston/Bore side; L = Stroke length</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-compress-arrows-alt"></i> Force</div>
+                                <div class="form-eq">P x A</div>
+                                <div class="form-eq">P x A</div>
+                                <div class="form-desc">P = Pressure; A = Area</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-stopwatch"></i> Time</div>
+                                <div class="form-eq">V ÷ FR</div>
+                                <div class="form-eq">V ÷ FR</div>
+                                <div class="form-desc">V = Volume; FR = Oil flow rate</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-fighter-jet"></i> Velocity</div>
+                                <div class="form-eq">L ÷ T</div>
+                                <div class="form-eq">L ÷ T</div>
+                                <div class="form-desc">L = Stroke length; T = Time</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-sign-out-alt"></i> Outflow</div>
+                                <div class="form-eq">FR ÷ Z</div>
+                                <div class="form-eq">FR x Z</div>
+                                <div class="form-desc">FR = Oil flow rate; Z = Ratio</div>
+                            </div>
+                            <div class="adv-row-form">
+                                <div class="adv-lbl"><i class="fas fa-chart-pie"></i> Ratio</div>
+                                <div class="form-eq" style="grid-column: 2 / span 2;">A(X) ÷ A(Y)</div>
+                                <div class="form-desc">A(X) = Area bore side; A(Y) = Area rod side</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MOTOR TAB -->
+                <div id="adv-tab-motor" class="adv-tab-content">
+                    <div class="tab-header-actions">
+                        <select class="type-selector"><option>Electric motor power</option></select>
+                        <button class="toggle-view-btn" id="btn-toggle-mot" onclick="toggleView('motor')">
+                            <i class="fas fa-subscript"></i> <span class="lbl-btn">Formula</span>
+                        </button>
+                    </div>
+
+                    <div id="mot-calc-view">
+                        <div class="adv-svg-area" style="padding:40px 0;">
+                            <i class="fas fa-bolt" style="font-size: 60px; color: var(--c-teal);"></i>
+                        </div>
+                        <div class="adv-input-table">
+                            <div class="adv-row">
+                                <div class="adv-lbl">Flow Rate</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-em-flow" value="20" oninput="calcMotor()">
+                                    <select id="u-em-flow" onchange="calcMotor()"><option value="lpm">l/min</option><option value="gpm">gpm</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Pressure</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-em-pres" value="150" oninput="calcMotor()">
+                                    <select id="u-em-pres" onchange="calcMotor()"><option value="bar">bar</option><option value="psi">psi</option></select>
+                                </div>
+                            </div>
+                            <div class="adv-row">
+                                <div class="adv-lbl">Total Efficiency</div>
+                                <div class="adv-inp-group">
+                                    <input type="number" id="inp-em-eff" value="85" oninput="calcMotor()">
+                                    <select><option>%</option></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="adv-output-table">
+                            <div class="adv-row">
+                                <div class="adv-lbl" style="font-weight:bold;">Required Power</div>
+                                <div class="adv-out-val" id="out-em-power" style="grid-column: 2 / span 2; font-size:1.1rem; color:var(--c-teal);">0.00</div>
+                                <div class="adv-inp-group">
+                                    <select id="u-out-em-power" onchange="calcMotor()"><option value="kW">kW</option><option value="hp">hp</option></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="mot-form-view" style="display:none;">
+                        <div class="adv-formula-table" style="text-align:center; padding: 40px 20px;">
+                            <i class="fas fa-bolt" style="font-size: 50px; color: var(--c-teal); margin-bottom: 30px;"></i>
+                            <div style="font-size: 1.5rem; margin-bottom: 20px; font-family: serif;">
+                                <span style="font-style: italic;">P</span> = 
+                                <span style="display: inline-block; vertical-align: middle; text-align: center;">
+                                    <span style="border-bottom: 1px solid #ccc; padding: 0 5px; display: block;">
+                                        <span style="font-style: italic;">V</span> x <span style="font-style: italic;">p</span> x <span style="font-style: italic;">N</span>
+                                    </span>
+                                    <span style="display: block; padding-top: 5px;">
+                                        2π x <span style="font-style: italic;">η<sub>m</sub></span> / 100
+                                    </span>
+                                </span>
+                            </div>
+                            <div style="color: var(--c-gray); margin: 20px 0;">OR</div>
+                            <div style="color: var(--c-gray); margin-bottom: 15px;">(Using flow rate)</div>
+                            
+                            <div style="font-size: 1.5rem; margin-bottom: 40px; font-family: serif;">
+                                <span style="font-style: italic;">P</span> = 
+                                <span style="display: inline-block; vertical-align: middle; text-align: center;">
+                                    <span style="border-bottom: 1px solid #ccc; padding: 0 5px; display: block;">
+                                        <span style="font-style: italic;">Q</span> x <span style="font-style: italic;">p</span>
+                                    </span>
+                                    <span style="display: block; padding-top: 5px;">
+                                        600 x <span style="font-style: italic;">η<sub>t</sub></span> / 100
+                                    </span>
+                                </span>
+                            </div>
+                            
+                            <div style="font-size: 0.9rem; color: #aaa; line-height: 1.8;">
+                                <span style="color: var(--c-orange);">V</span> = Displacement; &nbsp; 
+                                <span style="color: var(--c-orange);">p</span> = Pressure; &nbsp; 
+                                <span style="color: var(--c-orange);">N</span> = Speed;<br>
+                                <span style="color: var(--c-orange);">η<sub>m</sub></span> = Mechanical efficiency; &nbsp;
+                                <span style="color: var(--c-orange);">Q</span> = Flow rate; &nbsp;
+                                <span style="color: var(--c-orange);">η<sub>t</sub></span> = Total efficiency
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
