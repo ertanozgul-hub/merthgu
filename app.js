@@ -2101,11 +2101,11 @@ function toggleView(tab) {
     if (calcView.style.display === 'none') {
         calcView.style.display = 'block';
         formView.style.display = 'none';
-        btn.innerHTML = '<i class="fas fa-subscript"></i> <span class="lbl-btn">Formula</span>';
+        btn.innerHTML = '<i class="fas fa-subscript"></i> <span class="lbl-btn">Formül</span>';
     } else {
         calcView.style.display = 'none';
         formView.style.display = 'block';
-        btn.innerHTML = '<i class="fas fa-calculator"></i> <span class="lbl-btn">Calculator</span>';
+        btn.innerHTML = '<i class="fas fa-calculator"></i> <span class="lbl-btn">Hesaplayıcı</span>';
     }
 }
 
