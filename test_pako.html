@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<script>
+window.onload = () => {
+    let original = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    let compressed = pako.deflate(original);
+    let decompressed = pako.inflate(compressed);
+    console.log("Decompressed length:", decompressed.length);
+    console.log("Decompressed byteLength:", decompressed.byteLength);
+    console.log("Decompressed buffer byteLength:", decompressed.buffer.byteLength);
+};
+</script>
+</head>
+<body></body>
+</html>

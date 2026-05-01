@@ -1,0 +1,24 @@
+{
+  "name": "Mert Hidrolik ERP",
+  "short_name": "MERT ERP",
+  "description": "Hidrolik Ünite Sipariş Yönetimi ve 3D Üretim Sistemi",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#11141c",
+  "theme_color": "#181c25",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,3 +1,14 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+window.onerror = function(msg, url, line, col, error) {
+    console.log("SYNTAX ERROR AT LINE: " + line);
+    console.log("MESSAGE: " + msg);
+};
+</script>
+<script>
 // App Global State
 let currentOrderData = {
     materials: [],
@@ -118,10 +129,10 @@ async function loadFileDB(key) {
                     if (result.isOptimizedMesh) {
                         result = {
                             isOptimizedMesh: true,
-                            optimizedMeshes: deserializeMeshes(decompressed.buffer.slice(decompressed.byteOffset, decompressed.byteOffset + decompressed.byteLength))
+                            optimizedMeshes: deserializeMeshes(decompressed.buffer)
                         };
                     } else {
-                        result = decompressed.buffer.slice(decompressed.byteOffset, decompressed.byteOffset + decompressed.byteLength);
+                        result = decompressed.buffer;
                     }
                 } catch (e) {
                     console.error("Decompression error:", e);
@@ -1143,12 +1154,6 @@ function loadOrderDetails() {
     setV('projectCode', order.code);
     setV('sysPressure', order.pressure);
     
-    // Hydrate Production Hours
-    if (order.designHours !== undefined) setV('h-design', order.designHours);
-    if (order.weldingHours !== undefined) setV('h-welding', order.weldingHours);
-    if (order.paintHours !== undefined) setV('h-paint', order.paintHours);
-    if (order.montajHours !== undefined) setV('h-assembly', order.montajHours);
-
     if(document.getElementById('orderLabel')) {
         let displayNo = order.orderNo || order.id;
         document.getElementById('orderLabel').innerText = `Sipariş (${displayNo})`;
@@ -1278,9 +1283,6 @@ document.getElementById('saveOrderBtn')?.addEventListener('click', () => {
         stepName: currentOrderData.stepName || '',
         progress: actualProgress,
         completedStages: completedStagesArray,
-        designHours: parseFloat(document.getElementById('h-design')?.value) || 0,
-        weldingHours: parseFloat(document.getElementById('h-welding')?.value) || 0,
-        paintHours: parseFloat(document.getElementById('h-paint')?.value) || 0,
         montajHours: parseFloat(document.getElementById('h-assembly')?.value) || 0
     };
 
@@ -1945,103 +1947,9 @@ function renderDashboard() {
             </div>
         `;
     });
-    
-    // Call our new sidebar reports function with ALL orders (unfiltered)
-    renderSidebarReports(JSON.parse(localStorage.getItem('hg_orders') || '[]'));
 }
 
-/* ============================
-   7. Sidebar Reports
-============================ */
-function getISOWeek(d) {
-    let date = new Date(d.getTime());
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    let week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-}
-
-function renderSidebarReports(orders) {
-    if (!document.getElementById('sidebarReports')) return;
-
-    let now = new Date();
-    let todayStr = now.toISOString().split('T')[0];
-    let currentWeek = getISOWeek(now);
-    let currentMonth = now.getMonth();
-    let currentYear = now.getFullYear();
-
-    let stats = {
-        daily: { in: 0, out: 0, hrs: 0 },
-        weekly: { in: 0, out: 0, hrs: 0 },
-        monthly: { in: 0, out: 0, hrs: 0 },
-        yearly: { in: 0, out: 0, hrs: 0 }
-    };
-
-    orders.forEach(o => {
-        let orderDate = o.orderDate ? new Date(o.orderDate) : null;
-        let isIncoming = orderDate && !isNaN(orderDate.getTime());
-        
-        let deliveryDate = o.deliveryDate ? new Date(o.deliveryDate) : null;
-        let isOutgoing = o.progress === 100 && deliveryDate && !isNaN(deliveryDate.getTime());
-        
-        let qty = parseInt(o.qty) || 1;
-        let totalHrs = (parseFloat(o.designHours) || 0) + 
-                       (parseFloat(o.weldingHours) || 0) + 
-                       (parseFloat(o.paintHours) || 0) + 
-                       (parseFloat(o.montajHours) || 0);
-
-        // DAILY
-        if (isIncoming && orderDate.toISOString().split('T')[0] === todayStr) {
-            stats.daily.in += qty;
-        }
-        if (isOutgoing && deliveryDate.toISOString().split('T')[0] === todayStr) {
-            stats.daily.out += qty;
-            stats.daily.hrs += totalHrs;
-        }
-
-        // WEEKLY
-        if (isIncoming && orderDate.getFullYear() === currentYear && getISOWeek(orderDate) === currentWeek) {
-            stats.weekly.in += qty;
-        }
-        if (isOutgoing && deliveryDate.getFullYear() === currentYear && getISOWeek(deliveryDate) === currentWeek) {
-            stats.weekly.out += qty;
-            stats.weekly.hrs += totalHrs;
-        }
-
-        // MONTHLY
-        if (isIncoming && orderDate.getFullYear() === currentYear && orderDate.getMonth() === currentMonth) {
-            stats.monthly.in += qty;
-        }
-        if (isOutgoing && deliveryDate.getFullYear() === currentYear && deliveryDate.getMonth() === currentMonth) {
-            stats.monthly.out += qty;
-            stats.monthly.hrs += totalHrs;
-        }
-
-        // YEARLY
-        if (isIncoming && orderDate.getFullYear() === currentYear) {
-            stats.yearly.in += qty;
-        }
-        if (isOutgoing && deliveryDate.getFullYear() === currentYear) {
-            stats.yearly.out += qty;
-            stats.yearly.hrs += totalHrs;
-        }
-    });
-
-    const setT = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-    
-    setT('rep-daily-in', stats.daily.in);
-    setT('rep-daily-out', stats.daily.out);
-    setT('rep-daily-hrs', stats.daily.hrs);
-
-    setT('rep-weekly-in', stats.weekly.in);
-    setT('rep-weekly-out', stats.weekly.out);
-    setT('rep-weekly-hrs', stats.weekly.hrs);
-
-    setT('rep-monthly-in', stats.monthly.in);
-    setT('rep-monthly-out', stats.monthly.out);
-    setT('rep-monthly-hrs', stats.monthly.hrs);
-
-    setT('rep-yearly-in', stats.yearly.in);
-    setT('rep-yearly-out', stats.yearly.out);
-    setT('rep-yearly-hrs', stats.yearly.hrs);
-}
+</script>
+</head>
+<body></body>
+</html>

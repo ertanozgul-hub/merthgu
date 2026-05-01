@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mert-erp-v4';
+const CACHE_NAME = 'mert-erp-v1';
 
 // Uygulamanın internetsiz çalışması için hafızaya alınacak temel iskelet dosyaları
 const urlsToCache = [
@@ -11,29 +11,11 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         return cache.addAll(urlsToCache);
       })
-  );
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Eski önbellek siliniyor:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      return self.clients.claim();
-    })
   );
 });
 

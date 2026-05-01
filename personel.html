@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Günlük Personel Raporu</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .report-container {
+            padding: 24px;
+            overflow: auto;
+            flex: 1;
+            background: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .excel-table-wrapper {
+            background: var(--panel-bg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+            border: 1px solid var(--border);
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: auto;
+            color: var(--text-main);
+            font-size: 9.5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+        }
+
+        .excel-table th, .excel-table td {
+            border: 1px solid var(--border);
+            padding: 2px 2px;
+        }
+
+        .excel-table th {
+            background-color: var(--card-bg);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-row th { 
+            background-color: rgba(14, 165, 233, 0.1); 
+        }
+        
+        .section-header { 
+            writing-mode: vertical-rl; 
+            transform: rotate(180deg);
+            white-space: pre-wrap;
+            height: 90px;
+            padding: 4px 2px;
+        }
+
+        .department-tasarim { background-color: rgba(16, 185, 129, 0.05) !important; }
+        .department-montaj { background-color: rgba(59, 130, 246, 0.05) !important; }
+        .department-servis { background-color: rgba(245, 158, 11, 0.05) !important; }
+        .department-boya { background-color: rgba(249, 115, 22, 0.05) !important; }
+        .department-kaynak { background-color: rgba(239, 68, 68, 0.05) !important; }
+        .department-ofis { background-color: rgba(148, 163, 184, 0.05) !important; }
+
+        .blue-col { background-color: var(--primary) !important; color: white !important; font-weight: bold; }
+        .light-blue-bg { background-color: rgba(255,255,255,0.02); }
+        
+        .excel-table input {
+            border: none;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            font-size: 9.5px;
+            font-family: inherit;
+            background: transparent;
+            color: var(--text-main);
+            outline: none;
+            min-width: 0;
+        }
+        
+        .excel-table input:focus {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        /* --- Date Input Professional Styling --- */
+        .excel-table input[type="date"] {
+            text-transform: uppercase;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+        .excel-table input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        .excel-table input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        .excel-table tr.selected td {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            border-bottom: 2px solid rgba(239, 68, 68, 0.8) !important;
+            border-top: 2px solid rgba(239, 68, 68, 0.8) !important;
+        }
+        .excel-table tr.selected input {
+            background-color: transparent !important;
+        }
+
+        .nav-left { display: flex; align-items: center; }
+        .btn-back { 
+            color: white; 
+            font-size: 18px; 
+            margin-right: 15px; 
+            background: transparent; 
+            border: none; 
+            cursor: pointer; 
+        }
+        .btn-back:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <button class="btn-back" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i></button>
+            <h1 class="logo">MERT</h1>
+            <span class="company-info"><i class="fas fa-file-excel"></i> Günlük Personel Raporu</span>
+        </div>
+        <div class="nav-right" style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" onclick="addRow()"><i class="fas fa-plus"></i> Satır Ekle</button>
+            <button class="btn btn-secondary" style="color: var(--c-red); border-color: rgba(239, 68, 68, 0.5);" onclick="deleteRow()"><i class="fas fa-trash"></i> Seçili Satırı Sil</button>
+            <button class="btn btn-primary" id="saveReportBtn"><i class="fas fa-save"></i> Kaydet</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="report-container">
+        <div class="excel-table-wrapper">
+            <table class="excel-table">
+                <thead>
+                    <tr>
+                        <th colspan="6" style="text-align: left; background: transparent; border: none; font-size: 16px; padding: 15px;">ATÖLYEDE ÜNİTE MONTAJI HARİCİNDE YAPILAN EK İŞLEMLER, DIŞ SERVİSLER VE İZİNLER</th>
+                        <th colspan="12" style="border: none; background: transparent;"></th>
+                        <th colspan="4" style="border: none; background: transparent;">
+                            <div style="text-align: right; font-size: 10px; color: var(--text-muted);">
+                                Doküman No: MF08-03-02-06<br>
+                                Yayın Tarihi: 27/03/2022
+                            </div>
+                        </th>
+                    </tr>
+                    <tr class="header-row">
+                        <th rowspan="2">MÜŞTERİ</th>
+                        <th rowspan="2">İLGİLİSİ</th>
+                        <th rowspan="2">DURUMU</th>
+                        <th rowspan="2">İŞ TANIMI</th>
+                        <th rowspan="2" style="min-width: 200px;">NOTLAR</th>
+                        <th class="section-header" rowspan="2">BAŞLANGIÇ TARİHİ</th>
+                        
+                        <!-- TASARIM -->
+                        <th colspan="2" class="department-tasarim">TASARIM</th>
+                        <!-- MONTAJ -->
+                        <th colspan="5" class="department-montaj">MONTAJ</th>
+                        <!-- SERVİS -->
+                        <th colspan="2" class="department-servis">SERVİS</th>
+                        <!-- BOYA -->
+                        <th colspan="2" class="department-boya">BOYA</th>
+                        <!-- KAYNAK -->
+                        <th class="department-kaynak">KAYNAK</th>
+                        <!-- OFİS -->
+                        <th class="department-ofis">OFİS</th>
+                        
+                        <th class="blue-col" rowspan="2" style="writing-mode: vertical-rl; transform: rotate(180deg); padding: 10px 4px;">Bir Kişinin<br>harcadığı<br>gün sayısı</th>
+                        <th rowspan="2" style="writing-mode: vertical-rl; transform: rotate(180deg); padding: 10px 4px;">Bir kişinin<br>tahminde<br>n fazla<br>harcadığı gün</th>
+                        <th rowspan="2">İzinler</th>
+                    </tr>
+                    <tr class="header-row">
+                        <th class="department-tasarim section-header">SAMET ARSLANTAŞ</th>
+                        <th class="department-tasarim section-header">SONER ALTUNTAŞ</th>
+                        
+                        <th class="department-montaj section-header">CENGİZ DEMİRDATAŞ</th>
+                        <th class="department-montaj section-header">EMRE YÜCEL</th>
+                        <th class="department-montaj section-header">FURKAN MEMİŞ</th>
+                        <th class="department-montaj section-header">MUHAMMET ACAR</th>
+                        <th class="department-montaj section-header">HARUN KAVUKLUOĞ</th>
+                        
+                        <th class="department-servis section-header">OSMAN CELAYİR</th>
+                        <th class="department-servis section-header">AKIN ŞİNER</th>
+                        
+                        <th class="department-boya section-header">ÖNDER</th>
+                        <th class="department-boya section-header">ORHAN KAZAZ</th>
+                        
+                        <th class="department-kaynak section-header">ALİ GÜMÜŞ</th>
+                        
+                        <th class="department-ofis section-header">BÜLENT YÜCEL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="light-blue-bg">
+                        <td><input type="text" value="KAYSERİ"></td>
+                        <td><input type="text" value="Ömer E."></td>
+                        <td><input type="text" value="Dış"></td>
+                        <td><input type="text" value="servis"></td>
+                        <td><input type="text" value="montaj"></td>
+                        <td><input type="date" class="log-date" value="2026-01-05"></td>
+                        <!-- TASARIM -->
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <!-- MONTAJ -->
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <!-- SERVİS -->
+                        <td><input type="text" value="5,0"></td><td><input type="text"></td>
+                        <!-- BOYA -->
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <!-- KAYNAK -->
+                        <td><input type="text"></td>
+                        <!-- OFİS -->
+                        <td><input type="text"></td>
+                        
+                        <td class="blue-col">5,0</td>
+                        <td>0</td>
+                        <td><input type="text"></td>
+                    </tr>
+                    <tr class="light-blue-bg">
+                        <td><input type="text" value="ELAZIĞ"></td>
+                        <td><input type="text" value="Kubilay K."></td>
+                        <td><input type="text" value="Dış"></td>
+                        <td><input type="text" value="servis"></td>
+                        <td><input type="text" value="montaj"></td>
+                        <td><input type="date" class="log-date" value="2026-01-06"></td>
+                        <!-- TASARIM -->
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <!-- MONTAJ -->
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text" value="4,0"></td><td><input type="text"></td><td><input type="text"></td>
+                        <!-- SERVİS -->
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <!-- BOYA -->
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <!-- KAYNAK -->
+                        <td><input type="text"></td>
+                        <!-- OFİS -->
+                        <td><input type="text"></td>
+                        
+                        <td class="blue-col">4,0</td>
+                        <td>0</td>
+                        <td><input type="text"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="Tusaş"></td>
+                        <td><input type="text" value="batuhan t."></td>
+                        <td><input type="text" value="iç"></td>
+                        <td><input type="text" value="Tasarım"></td>
+                        <td><input type="text" value="Kalıplar için ek tasarım"></td>
+                        <td><input type="date" class="log-date" value="2026-03-02"></td>
+                        <td><input type="text"></td><td><input type="text" value="0,1"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">0,1</td>
+                        <td></td>
+                        <td><input type="text"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="Makine kimya"></td>
+                        <td><input type="text" value="Arif K."></td>
+                        <td><input type="text" value="iç"></td>
+                        <td><input type="text" value="Tasarım"></td>
+                        <td><input type="text" value="Suni deri taşıma antet revizyonları"></td>
+                        <td><input type="text" value="3 Mart"></td>
+                        <td><input type="text"></td><td><input type="text" value="0,8"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">0,8</td>
+                        <td></td>
+                        <td><input type="text"></td>
+                    </tr>
+                    <tr class="light-blue-bg">
+                        <td><input type="text" value="Tusaş"></td>
+                        <td><input type="text" value="batuhan t."></td>
+                        <td><input type="text" value="Dış"></td>
+                        <td><input type="text" value="kurulum"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text" value="3 Mart"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text" value="5,0"></td><td><input type="text" value="5,0"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">10,0</td>
+                        <td></td>
+                        <td><input type="text"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="Ali Gümüş"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text"></td>
+                        <td><input type="date" class="log-date" value="2026-03-16"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">0,0</td>
+                        <td></td>
+                        <td><input type="text" value="2"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="FURKAN MEMİŞ"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text"></td>
+                        <td><input type="date" class="log-date" value="2026-03-17"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">0,0</td>
+                        <td></td>
+                        <td><input type="text" value="2"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="EMRE YÜCEL"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text"></td>
+                        <td><input type="date" class="log-date" value="2026-03-18"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">0,0</td>
+                        <td></td>
+                        <td><input type="text" value="3"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text" value="BÜLENT YÜCEL"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text" value="izin"></td>
+                        <td><input type="text"></td>
+                        <td><input type="date" class="log-date" value="2026-03-19"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td><input type="text"></td>
+                        <td class="blue-col">0,0</td>
+                        <td></td>
+                        <td><input type="text" value="2"></td>
+                    </tr>
+                    <!-- Add extra empty rows for visual fill -->
+                    <tr>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="date" class="log-date"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td class="blue-col"></td><td></td><td><input type="text"></td>
+                    </tr>
+                    <tr class="light-blue-bg">
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="date" class="log-date"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td class="blue-col"></td><td></td><td><input type="text"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="date" class="log-date"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td>
+                        <td class="blue-col"></td><td></td><td><input type="text"></td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight: bold;">
+                        <td colspan="6" style="text-align: right; background-color: transparent;"></td>
+                        <!-- TASARIM -->
+                        <td>0</td><td>0,88</td>
+                        <!-- MONTAJ -->
+                        <td>5</td><td>5</td><td>4</td><td>0</td><td>0</td>
+                        <!-- SERVİS -->
+                        <td>5</td><td>0</td>
+                        <!-- BOYA -->
+                        <td>0</td><td>0</td>
+                        <!-- KAYNAK -->
+                        <td>0</td>
+                        <!-- OFİS -->
+                        <td>0</td>
+                        
+                        <td style="background-color: transparent;"></td>
+                        <td style="background-color: transparent;"></td>
+                        <td>9</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: center; font-weight: bold; padding: 10px;">HGÜ-Servis Müdürü<br><br>Kubilay Kılıç</td>
+                        <td colspan="2" style="font-weight: bold; padding: 10px;">Atölye<br>Sorumlusu<br>Ertan Özgül</td>
+                        <td colspan="11" style="font-weight: bold; text-align: center;">Toplam Çalışma Süresi</td>
+                        <td style="font-weight: bold; font-size: 14px;">19,88</td>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="8"></td>
+                        <td colspan="11" style="text-align: right; color: var(--text-muted); font-size: 10px;">İş için teklifte verilen gün sayısındaki hata oranı</td>
+                        <td style="font-weight: bold;">0%</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    
+    <datalist id="nameSuggestions"></datalist>
+    <datalist id="statusSuggestions">
+        <option value="İç"></option>
+        <option value="Dış"></option>
+        <option value="İzin"></option>
+    </datalist>
+
+    <script>
+        // Sayfa yüklendiğinde SADECE insan isimlerine (2. sütun) list özelliğini ekle ve önerileri oluştur
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSuggestions();
+            document.querySelectorAll('.excel-table tbody tr').forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                if(inputs.length > 1 && inputs[1]) {
+                    inputs[1].setAttribute('list', 'nameSuggestions');
+                    inputs[1].addEventListener('change', updateSuggestions);
+                }
+                if(inputs.length > 2 && inputs[2]) {
+                    inputs[2].setAttribute('list', 'statusSuggestions');
+                }
+            });
+        });
+
+        // Sadece insan isimlerini (2. sütun) toplayarak önerileri günceller
+        function updateSuggestions() {
+            const list = document.getElementById('nameSuggestions');
+            if(!list) return;
+            const values = new Set();
+            document.querySelectorAll('.excel-table tbody tr').forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                if(inputs.length > 1 && inputs[1]) {
+                    const val = inputs[1].value.trim();
+                    if(val && isNaN(val)) { 
+                        values.add(val);
+                    }
+                }
+            });
+            list.innerHTML = Array.from(values).map(v => `<option value="${v}">`).join('');
+        }
+        function addRow() {
+            const tbody = document.querySelector('.excel-table tbody');
+            const row = document.createElement('tr');
+            
+            // Satır rengini ardışık yap (light-blue-bg)
+            const lastRow = tbody.lastElementChild;
+            if (lastRow && !lastRow.classList.contains('light-blue-bg')) {
+                row.classList.add('light-blue-bg');
+            }
+            
+            // Bugünün tarihini profesyonel YYYY-MM-DD formatında al
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            
+            let html = '';
+            for(let i = 0; i < 22; i++) {
+                if (i === 5) {
+                    html += `<td><input type="date" class="log-date" value="${today}"></td>`;
+                } else if (i === 19) {
+                    html += '<td class="blue-col"></td>';
+                } else if (i === 20) {
+                    html += '<td></td>';
+                } else if (i === 1) { // 2. Sütun: İlgilisi (İnsan İsmi)
+                    html += '<td><input type="text" list="nameSuggestions"></td>';
+                } else if (i === 2) { // 3. Sütun: Durum (İç/Dış/İzin)
+                    html += '<td><input type="text" list="statusSuggestions"></td>';
+                } else {
+                    html += '<td><input type="text"></td>';
+                }
+            }
+            row.innerHTML = html;
+            tbody.appendChild(row);
+            
+            // Yeni eklenen satırda sadece insan ismine öneri dinleyicisini bağla
+            const newInputs = row.querySelectorAll('input');
+            if(newInputs.length > 1 && newInputs[1]) {
+                newInputs[1].addEventListener('change', updateSuggestions);
+            }
+            
+            // Tablonun en altına kaydır
+            const wrapper = document.querySelector('.excel-table-wrapper');
+            wrapper.scrollTop = wrapper.scrollHeight;
+        }
+
+        function deleteRow() {
+            const selectedRow = document.querySelector('.excel-table tbody tr.selected');
+            if (selectedRow) {
+                if(confirm('Seçili satırı silmek istediğinize emin misiniz?')) {
+                    selectedRow.remove();
+                }
+            } else {
+                alert('Lütfen silmek istediğiniz satırın herhangi bir hücresine tıklayarak seçin.');
+            }
+        }
+
+        // Satır seçimi için focus dinleyicisi
+        document.querySelector('.excel-table tbody').addEventListener('focusin', (e) => {
+            const tr = e.target.closest('tr');
+            if(tr) {
+                document.querySelectorAll('.excel-table tbody tr').forEach(row => row.classList.remove('selected'));
+                tr.classList.add('selected');
+            }
+        });
+
+        document.getElementById('saveReportBtn').addEventListener('click', () => {
+            const logs = [];
+            
+            // Satırları gez
+            document.querySelectorAll('.excel-table tbody tr').forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                if (inputs.length < 6) return;
+                
+                // 6. sütun (index 5) tarih hücresi
+                const dateVal = inputs[5].value;
+                if (!dateVal) return;
+                
+                let rowTotalHours = 0;
+                
+                // Tarihten sonraki tüm sayısal değerleri topla (gün olarak)
+                for (let i = 6; i < inputs.length; i++) {
+                    let val = parseFloat(inputs[i].value.replace(',', '.'));
+                    if (!isNaN(val)) {
+                        rowTotalHours += (val * 8); // 1 gün = 8 saat olarak kapasiteden düşülecek
+                    }
+                }
+                
+                if (rowTotalHours > 0) {
+                    logs.push({
+                        date: dateVal,
+                        hoursUsed: rowTotalHours
+                    });
+                }
+            });
+            
+            localStorage.setItem('hg_personnel_logs', JSON.stringify(logs));
+            alert('Rapor başarıyla kaydedildi! Girilen çalışma ve izin günleri ana sayfadaki Haftalık Kapasite hesabına entegre edildi.');
+        });
+    </script>
+</body>
+</html>
